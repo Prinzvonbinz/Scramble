@@ -1,0 +1,347 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<title>Scrambled Sentence Puzzle</title>
+<style>
+
+body{
+background:#0f1115;
+color:white;
+font-family:system-ui;
+text-align:center;
+margin:0;
+}
+
+h1{
+margin-top:20px;
+}
+
+#game{
+max-width:600px;
+margin:auto;
+}
+
+.grid{
+display:grid;
+grid-template-columns:repeat(5,1fr);
+gap:10px;
+margin:20px;
+}
+
+.tile{
+background:#1c1f26;
+padding:14px;
+border-radius:8px;
+cursor:pointer;
+transition:.2s;
+font-weight:bold;
+}
+
+.tile:hover{
+background:#2b303a;
+transform:scale(1.05);
+}
+
+.tile.used{
+visibility:hidden;
+}
+
+#build{
+margin:20px;
+font-size:22px;
+min-height:30px;
+}
+
+button{
+background:#3a86ff;
+border:none;
+color:white;
+padding:10px 18px;
+border-radius:6px;
+cursor:pointer;
+font-size:16px;
+}
+
+button:hover{
+background:#5aa0ff;
+}
+
+#found{
+margin-top:15px;
+}
+
+.word{
+padding:6px 10px;
+border-radius:6px;
+margin:4px;
+display:inline-block;
+}
+
+.win{
+position:fixed;
+top:0;
+left:0;
+width:100%;
+height:100%;
+background:#000c;
+display:none;
+align-items:center;
+justify-content:center;
+}
+
+.winbox{
+background:#1c1f26;
+padding:30px;
+border-radius:12px;
+}
+
+.stats{
+margin-top:10px;
+font-size:14px;
+color:#aaa;
+}
+
+</style>
+</head>
+<body>
+
+<h1>Scrambled Words</h1>
+
+<div id="game">
+
+<div id="found"></div>
+
+<div class="grid" id="grid"></div>
+
+<div id="build"></div>
+
+<button onclick="submitWord()">Submit</button>
+<button onclick="clearBuild()">Clear</button>
+
+<div class="stats">
+Zeit: <span id="time">0</span>s |
+Versuche: <span id="tries">0</span>
+</div>
+
+</div>
+
+<div class="win" id="win">
+<div class="winbox">
+<h2>Gewonnen!</h2>
+<p id="result"></p>
+<button onclick="location.reload()">Nochmal spielen</button>
+</div>
+</div>
+
+<script>
+
+const WORDS = [
+["SON","NEN","BLU","ME"],
+["NO","TIZ","HEFT"],
+["FUẞ","BALL"],
+["MOND","LICHT"],
+["SEE","STERN"],
+["SPIEL","PLATZ"],
+["RE","GEN","BO","GEN"],
+["FLIE","GE"]
+]
+
+let selected=[]
+let tiles=[]
+let build=[]
+let solved=[]
+let tries=0
+let time=0
+let timer
+
+const colors=[
+"#ff6b6b",
+"#4ecdc4",
+"#ffd93d",
+"#6c8cff"
+]
+
+function start(){
+
+shuffle(WORDS)
+
+selected=WORDS.slice(0,4)
+
+tiles=[]
+
+selected.forEach(w=>{
+w.forEach(p=>tiles.push(p))
+})
+
+while(tiles.length<25)tiles.push("")
+
+shuffle(tiles)
+
+draw()
+
+timer=setInterval(()=>{
+time++
+document.getElementById("time").innerText=time
+},1000)
+
+}
+
+function draw(){
+
+const grid=document.getElementById("grid")
+grid.innerHTML=""
+
+tiles.forEach((t,i)=>{
+
+const d=document.createElement("div")
+d.className="tile"
+d.innerText=t
+
+if(!t)d.style.visibility="hidden"
+
+d.onclick=()=>clickTile(i)
+
+grid.appendChild(d)
+
+})
+
+}
+
+function clickTile(i){
+
+const t=tiles[i]
+if(!t)return
+
+build.push({text:t,index:i})
+
+tiles[i]=""
+
+updateBuild()
+draw()
+
+}
+
+function updateBuild(){
+
+document.getElementById("build").innerText=
+build.map(b=>b.text).join("")
+
+}
+
+function clearBuild(){
+
+build.forEach(b=>{
+tiles[b.index]=b.text
+})
+
+build=[]
+updateBuild()
+draw()
+
+}
+
+function submitWord(){
+
+tries++
+document.getElementById("tries").innerText=tries
+
+const word=build.map(b=>b.text).join("")
+
+let correctIndex=-1
+
+selected.forEach((w,i)=>{
+if(w.join("")===word && !solved.includes(i)){
+correctIndex=i
+}
+})
+
+if(correctIndex>-1){
+
+solved.push(correctIndex)
+
+const span=document.createElement("span")
+span.className="word"
+span.style.background=colors[correctIndex]
+span.innerText=word
+
+document.getElementById("found").appendChild(span)
+
+build=[]
+
+updateBuild()
+
+checkWin()
+
+}else{
+
+hintColors()
+
+clearBuild()
+
+}
+
+}
+
+function hintColors(){
+
+const grid=document.getElementById("grid").children
+
+selected.forEach((w,i)=>{
+
+w.forEach(p=>{
+
+for(let g of grid){
+
+if(g.innerText===p){
+g.style.background=colors[i]
+setTimeout(()=>{
+g.style.background="#1c1f26"
+},600)
+}
+
+}
+
+})
+
+})
+
+}
+
+function checkWin(){
+
+if(solved.length===4){
+
+clearInterval(timer)
+
+const words=selected.map(w=>w.join("")).join(", ")
+
+document.getElementById("result").innerHTML=
+"Wörter: "+words+
+"<br>Zeit: "+time+
+"<br>Versuche: "+tries
+
+document.getElementById("win").style.display="flex"
+
+}
+
+}
+
+function shuffle(a){
+
+for(let i=a.length-1;i>0;i--){
+
+const j=Math.floor(Math.random()*(i+1))
+
+[a[i],a[j]]=[a[j],a[i]]
+
+}
+
+}
+
+start()
+
+</script>
+
+</body>
+</html>
