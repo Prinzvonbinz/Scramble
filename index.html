@@ -4,9 +4,9 @@
 <meta charset="UTF-8">
 <title>Silben Puzzle</title>
 <style>
-* {box-sizing:border-box;margin:0;padding:0;font-family:system-ui;}
-body {background:#0e0e11;color:white;display:flex;justify-content:center;align-items:center;height:100vh;overflow:hidden;}
-#game {width:100%;max-width:480px;text-align:center;transform:scale(1.2);}
+*{box-sizing:border-box;margin:0;padding:0;font-family:system-ui;}
+body{background:#0e0e11;color:white;display:flex;justify-content:center;align-items:center;height:100vh;overflow:hidden;}
+#game{width:100%;max-width:500px;text-align:center;transform:scale(1.2);}
 h1{margin-bottom:10px;font-size:28px;}
 #found{margin-bottom:10px;min-height:50px;display:flex;flex-wrap:wrap;justify-content:center;}
 .wordFound{display:inline-block;margin:3px;padding:5px 10px;border-radius:6px;background:#1f1f2a;}
@@ -32,46 +32,18 @@ button:hover{background:#5d76ff;}
 <button onclick="submitWord()">Submit</button>
 <button onclick="clearWord()">Clear</button>
 </div>
-<div id="stats"></div>
 </div>
-
 <div id="win">
 <h1>Gewonnen!</h1>
 <div id="winStats"></div>
 <button onclick="startGame()">Neustart</button>
 </div>
-
 <script>
-// Nur echte Silben, keine Fake
 const WORDS=[
-["Blu","me"],
-["Was","ser"],
-["Win","ter"],
-["Som","mer"],
-["Son","ne"],
-["Re","gen"],
-["Ster","ne"],
-["Mon","d"]
-["Gar","ten"]          // Garten
-["Fens","ter"]         // Fenster
-["Tisch"]              // Tisch (ein Silbenwort)
-["Lam","pe"]           // Lampe
-["Büch","er"]          // Bücher
-["Schrei","ben"]       // Schreiben
-["Lie","bes","brief"]   // Liebesbrief
-["Au","to","bahn"]      // Autobahn
-["Win","ter","fei","er"]// Winterfeier
-["Sonn","en","schein"]  // Sonnenschein
-["Re","gen","bo","gen"] // Regenbogen
-["Kin","der","gar","ten"]// Kindergarten
-["Schu","he"]           // Schuhe
-["Taschen","lam","pe"] // Taschenlampe
-["Haus","tür"]          // Haustür
-["Blü","ten","staub"]   // Blütenstaub
-["Fahr","rad"]          // Fahrrad
-["Schlaf","zim","mer"]  // Schlafzimmer
-["Wol","ken","bruch"]   // Wolkenbruch
-["Meh","rwert","steu","er"] // Mehrwertsteuer
+["Blu","me"],["Was","ser"],["Win","ter"],["Som","mer"],["Son","ne"],["Re","gen"],["Ster","ne"],["Mon","d"],
+["Gar","ten"],["Fens","ter"],["Tisch"],["Lam","pe"],["Büch","er"],["Schrei","ben"],["Lie","bes","brief"],["Au","to","bahn"],
+["Win","ter","fei","er"],["Sonn","en","schein"],["Re","gen","bo","gen"],["Kin","der","gar","ten"],["Schu","he"],["Taschen","lam","pe"],
+["Haus","tür"],["Blü","ten","staub"],["Fahr","rad"],["Schlaf","zim","mer"],["Wol","ken","bruch"],["Meh","rwert","steu","er"]
 ];
 
 let solutionWords=[];
@@ -79,37 +51,17 @@ let gridParts=[];
 let current=[];
 let tries=0;
 let startTime=0;
-
 const COLORS=["#ff6b6b","#ffd93d","#6bcB77","#4d96ff","#c77dff","#ff9f1c","#ff4c4c","#4cffd9"];
 
 function shuffle(a){return a.sort(()=>Math.random()-0.5);}
 
 function startGame(){
-tries=0;
-current=[];
-document.getElementById("current").innerHTML="";
-document.getElementById("found").innerHTML="";
-document.getElementById("win").style.display="none";
-
-solutionWords=shuffle([...WORDS]);
-
+tries=0;current=[];document.getElementById("current").innerHTML="";document.getElementById("found").innerHTML="";document.getElementById("win").style.display="none";
+solutionWords=shuffle([...WORDS]).slice(0,8);
 gridParts=[];
-
-// Alle Silben in Grid packen
-solutionWords.forEach((w,i)=>{
-w.forEach(s=>{
-gridParts.push({
-text:s,
-word:w.join(""),
-color:COLORS[i],
-used:false
-});
-});
-});
-
+solutionWords.forEach((w,i)=>{w.forEach(s=>{gridParts.push({text:s,word:w.join(""),color:COLORS[i],used:false});});});
 gridParts=shuffle(gridParts);
-renderGrid();
-startTime=Date.now();
+renderGrid();startTime=Date.now();
 }
 
 function renderGrid(){
@@ -134,20 +86,10 @@ grid.appendChild(d);
 function renderCurrent(){
 const c=document.getElementById("current");
 c.innerHTML="";
-current.forEach(p=>{
-const s=document.createElement("div");
-s.className="currentPart";
-s.innerText=p.text;
-c.appendChild(s);
-});
+current.forEach(p=>{const s=document.createElement("div");s.className="currentPart";s.innerText=p.text;c.appendChild(s);});
 }
 
-function clearWord(){
-current.forEach(p=>{gridParts[p.index].used=false;});
-current=[];
-renderCurrent();
-renderGrid();
-}
+function clearWord(){current.forEach(p=>{gridParts[p.index].used=false;});current=[];renderCurrent();renderGrid();}
 
 function submitWord(){
 tries++;
@@ -155,22 +97,13 @@ let word=current.map(x=>x.text).join("");
 let match=solutionWords.find(w=>w.join("")===word);
 if(match){
 document.getElementById("found").innerHTML+=`<span class="wordFound">${word}</span>`;
-current=[];
-renderCurrent();
-renderGrid();
+current=[];renderCurrent();renderGrid();
 solutionWords=solutionWords.filter(w=>w.join("")!==word);
 if(solutionWords.length===0) winGame();
 }else{
-// falsches Wort → Silben wieder zurück
 current.forEach(p=>gridParts[p.index].used=false);
-current.forEach(p=>{
-let tile=document.querySelectorAll(".tile")[p.index];
-tile.style.background="#ff4c4c";
-setTimeout(()=>{tile.style.background="#1a1a23";},500);
-});
-current=[];
-renderCurrent();
-renderGrid();
+current.forEach(p=>{let tile=document.querySelectorAll(".tile")[p.index];tile.style.background="#ff4c4c";setTimeout(()=>{tile.style.background="#1a1a23";},500);});
+current=[];renderCurrent();renderGrid();
 }
 }
 
@@ -179,8 +112,7 @@ let time=Math.floor((Date.now()-startTime)/1000);
 let best=localStorage.getItem("silbenBest");
 if(!best||time<best) localStorage.setItem("silbenBest",time);
 best=localStorage.getItem("silbenBest");
-document.getElementById("winStats").innerHTML=
-`Zeit: ${time}s<br>Versuche: ${tries}<br>Highscore: ${best}s`;
+document.getElementById("winStats").innerHTML=`Zeit: ${time}s<br>Versuche: ${tries}<br>Highscore: ${best}s`;
 document.getElementById("win").style.display="flex";
 }
 
