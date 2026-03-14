@@ -2,29 +2,36 @@
 <html lang="de">
 <head>
 <meta charset="UTF-8">
-<title>Scrambled Silben</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Scrambled</title>
 
 <style>
 
-html,body{
+*{box-sizing:border-box}
+
+body{
 margin:0;
-height:100%;
 background:#0f1115;
 color:white;
 font-family:system-ui;
 display:flex;
 justify-content:center;
 align-items:center;
+height:100dvh;
 }
 
 #game{
 width:min(92vw,620px);
+height:92dvh;
+display:grid;
+grid-template-rows:auto auto 1fr auto auto auto;
 text-align:center;
+gap:6px;
 }
 
 h1{
-margin:6px 0 10px 0;
-font-size:28px;
+margin:0;
+font-size:26px;
 }
 
 #found{
@@ -32,56 +39,55 @@ display:flex;
 flex-wrap:wrap;
 justify-content:center;
 gap:6px;
-min-height:32px;
+min-height:28px;
 }
 
 .word{
-padding:6px 10px;
-border-radius:8px;
+padding:4px 10px;
+border-radius:6px;
 font-weight:bold;
 }
 
 .grid{
 display:grid;
 grid-template-columns:repeat(5,1fr);
-gap:10px;
-margin:14px 0;
+gap:8px;
+width:100%;
+height:100%;
 }
 
 .tile{
 background:#1c1f26;
 border-radius:10px;
-aspect-ratio:1/1;
 display:flex;
 align-items:center;
 justify-content:center;
 font-weight:bold;
-font-size:1.2rem;
+font-size:clamp(14px,2.6vw,22px);
 cursor:pointer;
 transition:.15s;
 }
 
 .tile:hover{
 background:#2a303a;
-transform:scale(1.07);
+transform:scale(1.05);
 }
 
 #build{
-font-size:24px;
+font-size:22px;
 letter-spacing:2px;
-min-height:34px;
-margin-bottom:10px;
+min-height:30px;
 }
 
 button{
 background:#3a86ff;
 border:none;
 color:white;
-padding:10px 18px;
+padding:8px 14px;
 border-radius:8px;
-font-size:16px;
-margin:4px;
+font-size:15px;
 cursor:pointer;
+margin:2px;
 }
 
 button:hover{
@@ -89,8 +95,7 @@ background:#5aa0ff;
 }
 
 .stats{
-margin-top:6px;
-font-size:14px;
+font-size:13px;
 color:#aaa;
 }
 
@@ -105,7 +110,7 @@ justify-content:center;
 
 .winbox{
 background:#1c1f26;
-padding:30px;
+padding:28px;
 border-radius:14px;
 text-align:center;
 }
@@ -125,12 +130,15 @@ text-align:center;
 
 <div id="build"></div>
 
+<div>
 <button onclick="submitWord()">Submit</button>
 <button onclick="clearBuild()">Clear</button>
+</div>
 
 <div class="stats">
 Zeit: <span id="time">0</span>s |
-Versuche: <span id="tries">0</span>
+Versuche: <span id="tries">0</span> |
+Highscore: <span id="high">-</span>
 </div>
 
 </div>
@@ -139,14 +147,13 @@ Versuche: <span id="tries">0</span>
 <div class="winbox">
 <h2>Gewonnen!</h2>
 <p id="result"></p>
-<button onclick="location.reload()">Neustarten</button>
+<button onclick="location.reload()">Neustart</button>
 </div>
 </div>
 
 <script>
 
 const WORDS=[
-
 ["SON","NE"],
 ["BLU","ME"],
 ["MOND","LICHT"],
@@ -157,29 +164,22 @@ const WORDS=[
 ["WAS","SER","FALL"],
 ["SCHMET","TER","LING"],
 ["DON","NER","WET","TER"],
-["WIN","TER","SCHNEE"],
-["SOM","MER","SON","NE"],
-["HIM","MEL","BLAU"],
+["WIN","TER"],
+["SOM","MER"],
+["HIM","MEL"],
 ["MEER","WAS","SER"],
-["BLITZ","SCHNELL"],
 ["GAR","TEN","HAUS"],
 ["KIR","SCH","BAUM"],
 ["KIN","DER","GAR","TEN"],
 ["FEU","ER","WEHR"],
 ["BAU","ERN","HOF"],
 ["WOL","KEN","KRAT","ZER"],
-["SONN","EN","BRIL","LE"]
-
+["SONN","EN","BRIL","LE"],
+["HAND","SCHUH"],
+["KAF","FEE","TAS","SE"],
+["LEB","KU","CHEN"],
+["SCHU","HE"]
 ]
-
-let selected=[]
-let tiles=[]
-let build=[]
-let solved=[]
-
-let tries=0
-let time=0
-let timer
 
 const WORD_COUNT=6
 
@@ -192,6 +192,14 @@ const colors=[
 "#9b59b6"
 ]
 
+let selected=[]
+let tiles=[]
+let build=[]
+let solved=[]
+let tries=0
+let time=0
+let timer
+
 function start(){
 
 shuffle(WORDS)
@@ -199,12 +207,7 @@ shuffle(WORDS)
 selected=WORDS.slice(0,WORD_COUNT)
 
 tiles=[]
-
-selected.forEach(w=>{
-w.forEach(s=>{
-tiles.push(s)
-})
-})
+selected.forEach(w=>w.forEach(s=>tiles.push(s)))
 
 while(tiles.length<25)tiles.push("")
 
@@ -216,6 +219,8 @@ timer=setInterval(()=>{
 time++
 document.getElementById("time").innerText=time
 },1000)
+
+loadHigh()
 
 }
 
@@ -246,7 +251,6 @@ const t=tiles[i]
 if(!t)return
 
 build.push({text:t,index:i})
-
 tiles[i]=""
 
 updateBuild()
@@ -255,10 +259,8 @@ draw()
 }
 
 function updateBuild(){
-
 document.getElementById("build").innerText=
 build.map(b=>b.text).join("")
-
 }
 
 function clearBuild(){
@@ -324,6 +326,7 @@ w.forEach(p=>{
 for(let g of grid){
 
 if(g.innerText===p){
+
 g.style.background=colors[i]
 
 setTimeout(()=>{
@@ -348,6 +351,8 @@ clearInterval(timer)
 
 const words=selected.map(w=>w.join("")).join(", ")
 
+saveHigh()
+
 document.getElementById("result").innerHTML=
 "Wörter: "+words+
 "<br>Zeit: "+time+"s"+
@@ -359,12 +364,30 @@ document.getElementById("win").style.display="flex"
 
 }
 
+function saveHigh(){
+
+let best=localStorage.getItem("silbenHigh")
+
+if(!best || time<best){
+localStorage.setItem("silbenHigh",time)
+}
+
+loadHigh()
+
+}
+
+function loadHigh(){
+
+let best=localStorage.getItem("silbenHigh")
+document.getElementById("high").innerText=best?best+"s":"-"
+
+}
+
 function shuffle(a){
 
 for(let i=a.length-1;i>0;i--){
 
 const j=Math.floor(Math.random()*(i+1))
-
 [a[i],a[j]]=[a[j],a[i]]
 
 }
