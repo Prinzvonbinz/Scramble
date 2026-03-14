@@ -3,143 +3,36 @@
 <head>
 <meta charset="UTF-8">
 <title>Scrambled</title>
-
 <style>
-
-*{
-box-sizing:border-box;
-margin:0;
-padding:0;
-font-family:system-ui;
-}
-
-body{
-background:#0e0e11;
-color:white;
-display:flex;
-justify-content:center;
-align-items:center;
-height:100vh;
-overflow:hidden;
-zoom:1.15;
-}
-
-#game{
-width:420px;
-text-align:center;
-}
-
-h1{
-margin-bottom:10px;
-font-size:28px;
-}
-
-#found{
-margin-bottom:10px;
-min-height:40px;
-}
-
-.wordFound{
-display:inline-block;
-margin:3px;
-padding:5px 10px;
-border-radius:6px;
-background:#1f1f2a;
-}
-
-#grid{
-display:grid;
-grid-template-columns:repeat(5,1fr);
-gap:6px;
-margin:15px 0;
-}
-
-.tile{
-background:#1a1a23;
-border-radius:8px;
-padding:10px;
-cursor:pointer;
-font-weight:bold;
-transition:0.2s;
-}
-
-.tile:hover{
-background:#2b2b38;
-}
-
-.tile.used{
-visibility:hidden;
-}
-
-#current{
-height:40px;
-display:flex;
-justify-content:center;
-align-items:center;
-gap:6px;
-margin-top:10px;
-}
-
-.currentPart{
-background:#2b2b38;
-padding:6px 8px;
-border-radius:6px;
-}
-
-#controls{
-margin-top:10px;
-}
-
-button{
-background:#3b5cff;
-border:none;
-color:white;
-padding:10px 15px;
-border-radius:8px;
-cursor:pointer;
-font-weight:bold;
-}
-
-button:hover{
-background:#5d76ff;
-}
-
-#win{
-position:absolute;
-top:0;
-left:0;
-width:100%;
-height:100%;
-background:#0e0e11;
-display:none;
-justify-content:center;
-align-items:center;
-flex-direction:column;
-text-align:center;
-}
-
+* {box-sizing:border-box;margin:0;padding:0;font-family:system-ui;}
+body {background:#0e0e11;color:white;display:flex;justify-content:center;align-items:center;height:100vh;overflow:hidden;}
+#game {width:420px;text-align:center;}
+h1{margin-bottom:10px;font-size:28px;}
+#found{margin-bottom:10px;min-height:50px;}
+.wordFound{display:inline-block;margin:3px;padding:5px 10px;border-radius:6px;background:#1f1f2a;}
+#grid{display:grid;grid-template-columns:repeat(5,1fr);gap:6px;margin:15px 0;}
+.tile{background:#1a1a23;border-radius:8px;padding:10px;cursor:pointer;font-weight:bold;transition:0.2s;user-select:none;}
+.tile:hover{background:#2b2b38;}
+.tile.hidden{visibility:hidden;}
+#current{height:50px;display:flex;justify-content:center;align-items:center;gap:6px;margin-top:10px;}
+.currentPart{background:#2b2b38;padding:6px 8px;border-radius:6px;}
+#controls{margin-top:10px;}
+button{background:#3b5cff;border:none;color:white;padding:10px 15px;border-radius:8px;cursor:pointer;font-weight:bold;}
+button:hover{background:#5d76ff;}
+#win{position:absolute;top:0;left:0;width:100%;height:100%;background:#0e0e11;display:none;justify-content:center;align-items:center;flex-direction:column;text-align:center;}
 </style>
 </head>
-
 <body>
-
 <div id="game">
-
 <h1>Silben Puzzle</h1>
-
 <div id="found"></div>
-
 <div id="grid"></div>
-
 <div id="current"></div>
-
 <div id="controls">
 <button onclick="submitWord()">Submit</button>
 <button onclick="clearWord()">Clear</button>
 </div>
-
 <div id="stats"></div>
-
 </div>
 
 <div id="win">
@@ -149,30 +42,33 @@ text-align:center;
 </div>
 
 <script>
-
+// Wörter: Array von Silben
 const WORD_DB=[
-["Baum","baum"],
-["Blu","me","blume"],
-["Was","ser","wasser"],
-["Win","ter","winter"],
-["Som","mer","sommer"],
-["Son","ne","sonne"],
-["Re","gen","regen"],
-["Don","ner","donner"],
-["Blit","z","blitz"],
-["Feu","er","feuer"],
-["Er","de","erde"],
-["Ster","ne","sterne"],
-["Mon","d","mond"],
-["Me","er","meer"],
-["Gar","ten","garten"],
-["Schu","le","schule"],
-["Ta","fel","tafel"],
-["Kin","der","kinder"],
-["Spie","len","spielen"],
-["Freun","de","freunde"],
-["Blu","men","blumen"],
-["Bäu","me","bäume"]
+["Blu","me"],
+["Was","ser"],
+["Win","ter"],
+["Som","mer"],
+["Son","ne"],
+["Re","gen"],
+["Don","ner"],
+["Blit","z"],
+["Feu","er"],
+["Er","de"],
+["Ster","ne"],
+["Mon","d"],
+["Me","er"],
+["Gar","ten"],
+["Schu","le"],
+["Ta","fel"],
+["Kin","der"],
+["Spie","len"],
+["Freun","de"],
+["Bäu","me"],
+["Blü","ten","staub"],
+["Re","gen","bo","gen"],
+["Sonn","en","schein"],
+["Lie","bes","brief"],
+["Au","to","bahn"]
 ];
 
 let solutionWords=[];
@@ -181,21 +77,11 @@ let current=[];
 let tries=0;
 let startTime=0;
 
-const COLORS=[
-"#ff6b6b",
-"#ffd93d",
-"#6bcB77",
-"#4d96ff",
-"#c77dff",
-"#ff9f1c"
-];
+const COLORS=["#ff6b6b","#ffd93d","#6bcB77","#4d96ff","#c77dff","#ff9f1c"];
 
-function shuffle(a){
-return a.sort(()=>Math.random()-0.5);
-}
+function shuffle(a){return a.sort(()=>Math.random()-0.5);}
 
 function startGame(){
-
 tries=0;
 current=[];
 document.getElementById("current").innerHTML="";
@@ -206,137 +92,106 @@ solutionWords=shuffle([...WORD_DB]).slice(0,6);
 
 gridParts=[];
 
+// Silben in Grid
 solutionWords.forEach((w,i)=>{
-for(let j=0;j<w.length-1;j++){
+w.forEach(s=>{
 gridParts.push({
-text:w[j],
-word:w[w.length-1],
-color:COLORS[i]
+text:s,
+word:w.join(""),
+color:COLORS[i],
+used:false
 });
-}
+});
 });
 
+// Auffüllen auf 25 Silben
 while(gridParts.length<25){
 gridParts.push({
 text:["la","re","mi","ta","so","na","li","ko"][Math.floor(Math.random()*8)],
 word:null,
-color:"#444"
+color:"#444",
+used:false
 });
 }
 
 gridParts=shuffle(gridParts);
-
 renderGrid();
-
 startTime=Date.now();
 }
 
 function renderGrid(){
-
 const grid=document.getElementById("grid");
 grid.innerHTML="";
-
 gridParts.forEach((p,i)=>{
-
 const d=document.createElement("div");
 d.className="tile";
 d.innerText=p.text;
-
+if(p.used)d.classList.add("hidden");
 d.onclick=()=>{
-
+if(p.used) return;
 current.push({index:i,text:p.text});
+p.used=true;
 renderCurrent();
-
+renderGrid();
 };
-
 grid.appendChild(d);
-
 });
-
 }
 
 function renderCurrent(){
-
 const c=document.getElementById("current");
 c.innerHTML="";
-
 current.forEach(p=>{
 const s=document.createElement("div");
 s.className="currentPart";
 s.innerText=p.text;
 c.appendChild(s);
 });
-
 }
 
 function clearWord(){
+current.forEach(p=>{gridParts[p.index].used=false;});
 current=[];
 renderCurrent();
+renderGrid();
 }
 
 function submitWord(){
-
 tries++;
-
-let word=current.map(x=>x.text).join("").toLowerCase();
-
-let match=solutionWords.find(w=>w[w.length-1]===word);
-
+let word=current.map(x=>x.text).join("");
+let match=solutionWords.find(w=>w.join("")===word);
 if(match){
-
-document.getElementById("found").innerHTML+=
-`<span class="wordFound">${word}</span>`;
-
-current.forEach(p=>{
-document.querySelectorAll(".tile")[p.index].classList.add("used");
-});
-
-solutionWords=solutionWords.filter(w=>w[w.length-1]!==word);
-
+document.getElementById("found").innerHTML+=`<span class="wordFound">${word}</span>`;
+current=[];
+renderCurrent();
+renderGrid();
+solutionWords=solutionWords.filter(w=>w.join("")!==word);
 if(solutionWords.length===0) winGame();
-
 }else{
-
+// falsches Wort → Silben wieder zurück
+current.forEach(p=>gridParts[p.index].used=false);
 current.forEach(p=>{
 let tile=document.querySelectorAll(".tile")[p.index];
-let part=gridParts[p.index];
-
-if(part.word){
-tile.style.background=part.color;
-}
+tile.style.background="#ff4c4c";
+setTimeout(()=>{tile.style.background="#1a1a23";},500);
 });
-
+current=[];
+renderCurrent();
+renderGrid();
 }
-
-clearWord();
-
 }
 
 function winGame(){
-
 let time=Math.floor((Date.now()-startTime)/1000);
-
 let best=localStorage.getItem("silbenBest");
-
-if(!best||time<best){
-localStorage.setItem("silbenBest",time);
-best=time;
-}
-
+if(!best||time<best) localStorage.setItem("silbenBest",time);
+best=localStorage.getItem("silbenBest");
 document.getElementById("winStats").innerHTML=
-`
-Zeit: ${time}s<br>
-Versuche: ${tries}<br>
-Highscore: ${best}s
-`;
-
+`Zeit: ${time}s<br>Versuche: ${tries}<br>Highscore: ${best}s`;
 document.getElementById("win").style.display="flex";
-
 }
 
 startGame();
-
 </script>
-
 </body>
 </html>
