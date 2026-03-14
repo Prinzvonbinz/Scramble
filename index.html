@@ -25,25 +25,22 @@ width:min(92vw,620px);
 height:92dvh;
 display:grid;
 grid-template-rows:auto auto 1fr auto auto auto;
+gap:8px;
 text-align:center;
-gap:6px;
 }
 
-h1{
-margin:0;
-font-size:26px;
-}
+h1{margin:0;font-size:26px}
 
 #found{
 display:flex;
 flex-wrap:wrap;
 justify-content:center;
 gap:6px;
-min-height:28px;
+min-height:30px;
 }
 
 .word{
-padding:4px 10px;
+padding:5px 10px;
 border-radius:6px;
 font-weight:bold;
 }
@@ -52,8 +49,6 @@ font-weight:bold;
 display:grid;
 grid-template-columns:repeat(5,1fr);
 gap:8px;
-width:100%;
-height:100%;
 }
 
 .tile{
@@ -62,15 +57,18 @@ border-radius:10px;
 display:flex;
 align-items:center;
 justify-content:center;
+aspect-ratio:1/1;
+font-size:clamp(14px,2.5vw,22px);
 font-weight:bold;
-font-size:clamp(14px,2.6vw,22px);
 cursor:pointer;
 transition:.15s;
 }
 
-.tile:hover{
-background:#2a303a;
-transform:scale(1.05);
+.tile:hover{background:#2a303a;transform:scale(1.05)}
+
+.tile.used{
+opacity:0.2;
+pointer-events:none;
 }
 
 #build{
@@ -85,13 +83,7 @@ border:none;
 color:white;
 padding:8px 14px;
 border-radius:8px;
-font-size:15px;
 cursor:pointer;
-margin:2px;
-}
-
-button:hover{
-background:#5aa0ff;
 }
 
 .stats{
@@ -111,7 +103,7 @@ justify-content:center;
 .winbox{
 background:#1c1f26;
 padding:28px;
-border-radius:14px;
+border-radius:12px;
 text-align:center;
 }
 
@@ -137,8 +129,7 @@ text-align:center;
 
 <div class="stats">
 Zeit: <span id="time">0</span>s |
-Versuche: <span id="tries">0</span> |
-Highscore: <span id="high">-</span>
+Versuche: <span id="tries">0</span>
 </div>
 
 </div>
@@ -167,18 +158,10 @@ const WORDS=[
 ["WIN","TER"],
 ["SOM","MER"],
 ["HIM","MEL"],
-["MEER","WAS","SER"],
-["GAR","TEN","HAUS"],
+["GAR","TEN"],
 ["KIR","SCH","BAUM"],
 ["KIN","DER","GAR","TEN"],
-["FEU","ER","WEHR"],
-["BAU","ERN","HOF"],
-["WOL","KEN","KRAT","ZER"],
-["SONN","EN","BRIL","LE"],
-["HAND","SCHUH"],
-["KAF","FEE","TAS","SE"],
-["LEB","KU","CHEN"],
-["SCHU","HE"]
+["FEU","ER","WEHR"]
 ]
 
 const WORD_COUNT=6
@@ -196,6 +179,7 @@ let selected=[]
 let tiles=[]
 let build=[]
 let solved=[]
+
 let tries=0
 let time=0
 let timer
@@ -209,8 +193,6 @@ selected=WORDS.slice(0,WORD_COUNT)
 tiles=[]
 selected.forEach(w=>w.forEach(s=>tiles.push(s)))
 
-while(tiles.length<25)tiles.push("")
-
 shuffle(tiles)
 
 draw()
@@ -219,8 +201,6 @@ timer=setInterval(()=>{
 time++
 document.getElementById("time").innerText=time
 },1000)
-
-loadHigh()
 
 }
 
@@ -235,7 +215,9 @@ const d=document.createElement("div")
 d.className="tile"
 d.innerText=t
 
-if(!t)d.style.visibility="hidden"
+if(build.find(b=>b.index===i)){
+d.classList.add("used")
+}
 
 d.onclick=()=>clickTile(i)
 
@@ -251,7 +233,6 @@ const t=tiles[i]
 if(!t)return
 
 build.push({text:t,index:i})
-tiles[i]=""
 
 updateBuild()
 draw()
@@ -264,15 +245,9 @@ build.map(b=>b.text).join("")
 }
 
 function clearBuild(){
-
-build.forEach(b=>{
-tiles[b.index]=b.text
-})
-
 build=[]
 updateBuild()
 draw()
-
 }
 
 function submitWord(){
@@ -304,14 +279,14 @@ document.getElementById("found").appendChild(span)
 build=[]
 updateBuild()
 
-checkWin()
-
 }else{
 
 hintColors()
 clearBuild()
 
 }
+
+checkWin()
 
 }
 
@@ -320,25 +295,16 @@ function hintColors(){
 const grid=document.getElementById("grid").children
 
 selected.forEach((w,i)=>{
-
 w.forEach(p=>{
-
 for(let g of grid){
-
 if(g.innerText===p){
-
 g.style.background=colors[i]
-
 setTimeout(()=>{
 g.style.background="#1c1f26"
-},600)
-
+},500)
 }
-
 }
-
 })
-
 })
 
 }
@@ -351,8 +317,6 @@ clearInterval(timer)
 
 const words=selected.map(w=>w.join("")).join(", ")
 
-saveHigh()
-
 document.getElementById("result").innerHTML=
 "Wörter: "+words+
 "<br>Zeit: "+time+"s"+
@@ -364,34 +328,11 @@ document.getElementById("win").style.display="flex"
 
 }
 
-function saveHigh(){
-
-let best=localStorage.getItem("silbenHigh")
-
-if(!best || time<best){
-localStorage.setItem("silbenHigh",time)
-}
-
-loadHigh()
-
-}
-
-function loadHigh(){
-
-let best=localStorage.getItem("silbenHigh")
-document.getElementById("high").innerText=best?best+"s":"-"
-
-}
-
 function shuffle(a){
-
 for(let i=a.length-1;i>0;i--){
-
 const j=Math.floor(Math.random()*(i+1))
 [a[i],a[j]]=[a[j],a[i]]
-
 }
-
 }
 
 start()
