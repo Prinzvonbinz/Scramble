@@ -2,22 +2,22 @@
 <html lang="de">
 <head>
 <meta charset="UTF-8">
-<title>Scrambled</title>
+<title>Silben Puzzle</title>
 <style>
 * {box-sizing:border-box;margin:0;padding:0;font-family:system-ui;}
 body {background:#0e0e11;color:white;display:flex;justify-content:center;align-items:center;height:100vh;overflow:hidden;}
-#game {width:420px;text-align:center;}
+#game {width:100%;max-width:480px;text-align:center;transform:scale(1.2);}
 h1{margin-bottom:10px;font-size:28px;}
-#found{margin-bottom:10px;min-height:50px;}
+#found{margin-bottom:10px;min-height:50px;display:flex;flex-wrap:wrap;justify-content:center;}
 .wordFound{display:inline-block;margin:3px;padding:5px 10px;border-radius:6px;background:#1f1f2a;}
-#grid{display:grid;grid-template-columns:repeat(5,1fr);gap:6px;margin:15px 0;}
-.tile{background:#1a1a23;border-radius:8px;padding:10px;cursor:pointer;font-weight:bold;transition:0.2s;user-select:none;}
+#grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(60px,1fr));gap:6px;margin:15px 0;justify-items:center;}
+.tile{background:#1a1a23;border-radius:8px;padding:10px;cursor:pointer;font-weight:bold;transition:0.2s;user-select:none;text-align:center;}
 .tile:hover{background:#2b2b38;}
 .tile.hidden{visibility:hidden;}
-#current{height:50px;display:flex;justify-content:center;align-items:center;gap:6px;margin-top:10px;}
+#current{height:50px;display:flex;justify-content:center;align-items:center;gap:6px;margin-top:10px;flex-wrap:wrap;}
 .currentPart{background:#2b2b38;padding:6px 8px;border-radius:6px;}
 #controls{margin-top:10px;}
-button{background:#3b5cff;border:none;color:white;padding:10px 15px;border-radius:8px;cursor:pointer;font-weight:bold;}
+button{background:#3b5cff;border:none;color:white;padding:10px 15px;border-radius:8px;cursor:pointer;font-weight:bold;margin:0 5px;}
 button:hover{background:#5d76ff;}
 #win{position:absolute;top:0;left:0;width:100%;height:100%;background:#0e0e11;display:none;justify-content:center;align-items:center;flex-direction:column;text-align:center;}
 </style>
@@ -42,33 +42,36 @@ button:hover{background:#5d76ff;}
 </div>
 
 <script>
-// Wörter: Array von Silben
-const WORD_DB=[
+// Nur echte Silben, keine Fake
+const WORDS=[
 ["Blu","me"],
 ["Was","ser"],
 ["Win","ter"],
 ["Som","mer"],
 ["Son","ne"],
 ["Re","gen"],
-["Don","ner"],
-["Blit","z"],
-["Feu","er"],
-["Er","de"],
 ["Ster","ne"],
-["Mon","d"],
-["Me","er"],
-["Gar","ten"],
-["Schu","le"],
-["Ta","fel"],
-["Kin","der"],
-["Spie","len"],
-["Freun","de"],
-["Bäu","me"],
-["Blü","ten","staub"],
-["Re","gen","bo","gen"],
-["Sonn","en","schein"],
-["Lie","bes","brief"],
-["Au","to","bahn"]
+["Mon","d"]
+["Gar","ten"]          // Garten
+["Fens","ter"]         // Fenster
+["Tisch"]              // Tisch (ein Silbenwort)
+["Lam","pe"]           // Lampe
+["Büch","er"]          // Bücher
+["Schrei","ben"]       // Schreiben
+["Lie","bes","brief"]   // Liebesbrief
+["Au","to","bahn"]      // Autobahn
+["Win","ter","fei","er"]// Winterfeier
+["Sonn","en","schein"]  // Sonnenschein
+["Re","gen","bo","gen"] // Regenbogen
+["Kin","der","gar","ten"]// Kindergarten
+["Schu","he"]           // Schuhe
+["Taschen","lam","pe"] // Taschenlampe
+["Haus","tür"]          // Haustür
+["Blü","ten","staub"]   // Blütenstaub
+["Fahr","rad"]          // Fahrrad
+["Schlaf","zim","mer"]  // Schlafzimmer
+["Wol","ken","bruch"]   // Wolkenbruch
+["Meh","rwert","steu","er"] // Mehrwertsteuer
 ];
 
 let solutionWords=[];
@@ -77,7 +80,7 @@ let current=[];
 let tries=0;
 let startTime=0;
 
-const COLORS=["#ff6b6b","#ffd93d","#6bcB77","#4d96ff","#c77dff","#ff9f1c"];
+const COLORS=["#ff6b6b","#ffd93d","#6bcB77","#4d96ff","#c77dff","#ff9f1c","#ff4c4c","#4cffd9"];
 
 function shuffle(a){return a.sort(()=>Math.random()-0.5);}
 
@@ -88,11 +91,11 @@ document.getElementById("current").innerHTML="";
 document.getElementById("found").innerHTML="";
 document.getElementById("win").style.display="none";
 
-solutionWords=shuffle([...WORD_DB]).slice(0,6);
+solutionWords=shuffle([...WORDS]);
 
 gridParts=[];
 
-// Silben in Grid
+// Alle Silben in Grid packen
 solutionWords.forEach((w,i)=>{
 w.forEach(s=>{
 gridParts.push({
@@ -103,16 +106,6 @@ used:false
 });
 });
 });
-
-// Auffüllen auf 25 Silben
-while(gridParts.length<25){
-gridParts.push({
-text:["la","re","mi","ta","so","na","li","ko"][Math.floor(Math.random()*8)],
-word:null,
-color:"#444",
-used:false
-});
-}
 
 gridParts=shuffle(gridParts);
 renderGrid();
