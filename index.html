@@ -2,113 +2,119 @@
 <html lang="de">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Scramble</title>
+<title>Scrambled</title>
 
 <style>
 
-*{box-sizing:border-box}
+*{
+box-sizing:border-box;
+margin:0;
+padding:0;
+font-family:system-ui;
+}
 
 body{
-margin:0;
-background:#0f1115;
+background:#0e0e11;
 color:white;
-font-family:system-ui;
-height:100dvh;
 display:flex;
 justify-content:center;
 align-items:center;
+height:100vh;
+overflow:hidden;
+zoom:1.15;
 }
 
 #game{
-width:min(95vw,620px);
-height:92dvh;
-display:grid;
-grid-template-rows:auto auto 1fr auto auto auto;
-gap:8px;
+width:420px;
 text-align:center;
 }
 
-h1{margin:0;font-size:26px}
+h1{
+margin-bottom:10px;
+font-size:28px;
+}
 
 #found{
-display:flex;
-flex-wrap:wrap;
-justify-content:center;
-gap:6px;
-min-height:28px;
+margin-bottom:10px;
+min-height:40px;
 }
 
-.word{
-padding:4px 10px;
+.wordFound{
+display:inline-block;
+margin:3px;
+padding:5px 10px;
 border-radius:6px;
-font-weight:bold;
+background:#1f1f2a;
 }
 
-.grid{
+#grid{
 display:grid;
 grid-template-columns:repeat(5,1fr);
-gap:8px;
+gap:6px;
+margin:15px 0;
 }
 
 .tile{
-background:#1c1f26;
-border-radius:10px;
-display:flex;
-align-items:center;
-justify-content:center;
-aspect-ratio:1/1;
-font-size:clamp(14px,2.5vw,22px);
-font-weight:bold;
+background:#1a1a23;
+border-radius:8px;
+padding:10px;
 cursor:pointer;
-transition:.15s;
+font-weight:bold;
+transition:0.2s;
 }
 
-.tile:hover{background:#2a303a}
+.tile:hover{
+background:#2b2b38;
+}
 
 .tile.used{
-opacity:0.25;
-pointer-events:none;
-}
-
-.tile.empty{
 visibility:hidden;
 }
 
-#build{
-font-size:22px;
-letter-spacing:2px;
-min-height:30px;
+#current{
+height:40px;
+display:flex;
+justify-content:center;
+align-items:center;
+gap:6px;
+margin-top:10px;
+}
+
+.currentPart{
+background:#2b2b38;
+padding:6px 8px;
+border-radius:6px;
+}
+
+#controls{
+margin-top:10px;
 }
 
 button{
-background:#3a86ff;
+background:#3b5cff;
 border:none;
 color:white;
-padding:8px 14px;
+padding:10px 15px;
 border-radius:8px;
 cursor:pointer;
-margin:2px;
+font-weight:bold;
 }
 
-.stats{
-font-size:13px;
-color:#aaa;
+button:hover{
+background:#5d76ff;
 }
 
-.win{
-position:fixed;
-inset:0;
-background:#000c;
+#win{
+position:absolute;
+top:0;
+left:0;
+width:100%;
+height:100%;
+background:#0e0e11;
 display:none;
-align-items:center;
 justify-content:center;
-}
-
-.winbox{
-background:#1c1f26;
-padding:28px;
-border-radius:12px;
+align-items:center;
+flex-direction:column;
 text-align:center;
 }
 
@@ -123,255 +129,212 @@ text-align:center;
 
 <div id="found"></div>
 
-<div id="grid" class="grid"></div>
+<div id="grid"></div>
 
-<div id="build"></div>
+<div id="current"></div>
 
-<div>
+<div id="controls">
 <button onclick="submitWord()">Submit</button>
-<button onclick="clearBuild()">Clear</button>
+<button onclick="clearWord()">Clear</button>
 </div>
 
-<div class="stats">
-Zeit: <span id="time">0</span>s |
-Versuche: <span id="tries">0</span>
-</div>
+<div id="stats"></div>
 
 </div>
 
-<div class="win" id="win">
-<div class="winbox">
-<h2>Gewonnen!</h2>
-<p id="result"></p>
-<button onclick="location.reload()">Neustart</button>
-</div>
+<div id="win">
+<h1>Gewonnen!</h1>
+<div id="winStats"></div>
+<button onclick="startGame()">Neustart</button>
 </div>
 
 <script>
 
-const WORDS=[
+const WORD_DB=[
+["Baum","baum"],
+["Blu","me","blume"],
+["Was","ser","wasser"],
+["Win","ter","winter"],
+["Som","mer","sommer"],
+["Son","ne","sonne"],
+["Re","gen","regen"],
+["Don","ner","donner"],
+["Blit","z","blitz"],
+["Feu","er","feuer"],
+["Er","de","erde"],
+["Ster","ne","sterne"],
+["Mon","d","mond"],
+["Me","er","meer"],
+["Gar","ten","garten"],
+["Schu","le","schule"],
+["Ta","fel","tafel"],
+["Kin","der","kinder"],
+["Spie","len","spielen"],
+["Freun","de","freunde"],
+["Blu","men","blumen"],
+["Bäu","me","bäume"]
+];
 
-["SON","NE"],
-["BLU","ME"],
-["MOND","LICHT"],
-["STER","NE"],
-["FUSS","BALL"],
-["SPIEL","PLATZ"],
-["RE","GEN","BO","GEN"],
-["WAS","SER","FALL"],
-["SCHMET","TER","LING"],
-["DON","NER","WET","TER"],
-["WIN","TER"],
-["SOM","MER"],
-["HIM","MEL"],
-["GAR","TEN"],
-["KIR","SCH","BAUM"],
-["KIN","DER","GAR","TEN"],
-["FEU","ER","WEHR"]
-
-]
-
-const WORD_COUNT=6
+let solutionWords=[];
+let gridParts=[];
+let current=[];
+let tries=0;
+let startTime=0;
 
 const COLORS=[
 "#ff6b6b",
-"#4ecdc4",
 "#ffd93d",
-"#6c8cff",
-"#ff9f43",
-"#9b59b6"
-]
+"#6bcB77",
+"#4d96ff",
+"#c77dff",
+"#ff9f1c"
+];
 
-let selected=[]
-let tiles=[]
-let build=[]
-let solved=[]
-let tries=0
-let time=0
-let timer
+function shuffle(a){
+return a.sort(()=>Math.random()-0.5);
+}
 
-function start(){
+function startGame(){
 
-shuffle(WORDS)
+tries=0;
+current=[];
+document.getElementById("current").innerHTML="";
+document.getElementById("found").innerHTML="";
+document.getElementById("win").style.display="none";
 
-selected=WORDS.slice(0,WORD_COUNT)
+solutionWords=shuffle([...WORD_DB]).slice(0,6);
 
-tiles=[]
-selected.forEach(w=>w.forEach(s=>tiles.push(s)))
+gridParts=[];
 
-while(tiles.length<25)tiles.push("")
+solutionWords.forEach((w,i)=>{
+for(let j=0;j<w.length-1;j++){
+gridParts.push({
+text:w[j],
+word:w[w.length-1],
+color:COLORS[i]
+});
+}
+});
 
-shuffle(tiles)
+while(gridParts.length<25){
+gridParts.push({
+text:["la","re","mi","ta","so","na","li","ko"][Math.floor(Math.random()*8)],
+word:null,
+color:"#444"
+});
+}
 
-draw()
+gridParts=shuffle(gridParts);
 
-timer=setInterval(()=>{
-time++
-document.getElementById("time").textContent=time
-},1000)
+renderGrid();
+
+startTime=Date.now();
+}
+
+function renderGrid(){
+
+const grid=document.getElementById("grid");
+grid.innerHTML="";
+
+gridParts.forEach((p,i)=>{
+
+const d=document.createElement("div");
+d.className="tile";
+d.innerText=p.text;
+
+d.onclick=()=>{
+
+current.push({index:i,text:p.text});
+renderCurrent();
+
+};
+
+grid.appendChild(d);
+
+});
 
 }
 
-function draw(){
+function renderCurrent(){
 
-const grid=document.getElementById("grid")
-grid.innerHTML=""
+const c=document.getElementById("current");
+c.innerHTML="";
 
-tiles.forEach((t,i)=>{
-
-const d=document.createElement("div")
-
-if(t===""){
-d.className="tile empty"
-grid.appendChild(d)
-return
-}
-
-d.className="tile"
-d.textContent=t
-
-if(build.find(b=>b.index===i)){
-d.classList.add("used")
-}
-
-d.onclick=()=>clickTile(i)
-
-grid.appendChild(d)
-
-})
+current.forEach(p=>{
+const s=document.createElement("div");
+s.className="currentPart";
+s.innerText=p.text;
+c.appendChild(s);
+});
 
 }
 
-function clickTile(i){
-
-if(tiles[i]==="")return
-
-build.push({text:tiles[i],index:i})
-
-updateBuild()
-draw()
-
-}
-
-function updateBuild(){
-
-document.getElementById("build").textContent=
-build.map(b=>b.text).join("")
-
-}
-
-function clearBuild(){
-
-build=[]
-updateBuild()
-draw()
-
+function clearWord(){
+current=[];
+renderCurrent();
 }
 
 function submitWord(){
 
-tries++
-document.getElementById("tries").textContent=tries
+tries++;
 
-const word=build.map(b=>b.text).join("")
+let word=current.map(x=>x.text).join("").toLowerCase();
 
-let correctIndex=-1
+let match=solutionWords.find(w=>w[w.length-1]===word);
 
-selected.forEach((w,i)=>{
+if(match){
 
-if(w.join("")===word && !solved.includes(i)){
-correctIndex=i
-}
+document.getElementById("found").innerHTML+=
+`<span class="wordFound">${word}</span>`;
 
-})
+current.forEach(p=>{
+document.querySelectorAll(".tile")[p.index].classList.add("used");
+});
 
-if(correctIndex>-1){
+solutionWords=solutionWords.filter(w=>w[w.length-1]!==word);
 
-solved.push(correctIndex)
-
-const span=document.createElement("span")
-span.className="word"
-span.style.background=COLORS[correctIndex]
-span.textContent=word
-
-document.getElementById("found").appendChild(span)
-
-build.forEach(b=>tiles[b.index]="")
-
-build=[]
-updateBuild()
-draw()
+if(solutionWords.length===0) winGame();
 
 }else{
 
-hintColors()
-clearBuild()
+current.forEach(p=>{
+let tile=document.querySelectorAll(".tile")[p.index];
+let part=gridParts[p.index];
+
+if(part.word){
+tile.style.background=part.color;
+}
+});
 
 }
 
-checkWin()
+clearWord();
 
 }
 
-function hintColors(){
+function winGame(){
 
-const grid=document.getElementById("grid").children
+let time=Math.floor((Date.now()-startTime)/1000);
 
-selected.forEach((w,i)=>{
+let best=localStorage.getItem("silbenBest");
 
-w.forEach(s=>{
+if(!best||time<best){
+localStorage.setItem("silbenBest",time);
+best=time;
+}
 
-for(let g of grid){
+document.getElementById("winStats").innerHTML=
+`
+Zeit: ${time}s<br>
+Versuche: ${tries}<br>
+Highscore: ${best}s
+`;
 
-if(g.textContent===s){
-
-g.style.background=COLORS[i]
-
-setTimeout(()=>{
-g.style.background="#1c1f26"
-},500)
+document.getElementById("win").style.display="flex";
 
 }
 
-}
-
-})
-
-})
-
-}
-
-function checkWin(){
-
-if(solved.length===WORD_COUNT){
-
-clearInterval(timer)
-
-const words=selected.map(w=>w.join("")).join(", ")
-
-document.getElementById("result").innerHTML=
-"Wörter: "+words+
-"<br>Zeit: "+time+"s"+
-"<br>Versuche: "+tries
-
-document.getElementById("win").style.display="flex"
-
-}
-
-}
-
-function shuffle(a){
-
-for(let i=a.length-1;i>0;i--){
-
-const j=Math.floor(Math.random()*(i+1))
-[a[i],a[j]]=[a[j],a[i]]
-
-}
-
-}
-
-start()
+startGame();
 
 </script>
 
