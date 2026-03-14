@@ -6,7 +6,7 @@
 <style>
 *{box-sizing:border-box;margin:0;padding:0;font-family:system-ui;}
 body{background:#0e0e11;color:white;display:flex;justify-content:center;align-items:center;height:100vh;overflow:hidden;}
-#game{width:100%;max-width:500px;text-align:center;transform:scale(1.2);}
+#game{width:100%;max-width:480px;text-align:center;transform:scale(1.2);}
 h1{margin-bottom:10px;font-size:28px;}
 #found{margin-bottom:10px;min-height:50px;display:flex;flex-wrap:wrap;justify-content:center;}
 .wordFound{display:inline-block;margin:3px;padding:5px 10px;border-radius:6px;background:#1f1f2a;}
@@ -38,7 +38,9 @@ button:hover{background:#5d76ff;}
 <div id="winStats"></div>
 <button onclick="startGame()">Neustart</button>
 </div>
+
 <script>
+// Alle Silben sind echte Silben von 8 Wörtern
 const WORDS=[
 ["Blu","me"],["Was","ser"],["Win","ter"],["Som","mer"],["Son","ne"],["Re","gen"],["Ster","ne"],["Mon","d"],
 ["Gar","ten"],["Fens","ter"],["Tisch"],["Lam","pe"],["Büch","er"],["Schrei","ben"],["Lie","bes","brief"],["Au","to","bahn"],
@@ -56,12 +58,24 @@ const COLORS=["#ff6b6b","#ffd93d","#6bcB77","#4d96ff","#c77dff","#ff9f1c","#ff4c
 function shuffle(a){return a.sort(()=>Math.random()-0.5);}
 
 function startGame(){
-tries=0;current=[];document.getElementById("current").innerHTML="";document.getElementById("found").innerHTML="";document.getElementById("win").style.display="none";
+tries=0;
+current=[];
+document.getElementById("current").innerHTML="";
+document.getElementById("found").innerHTML="";
+document.getElementById("win").style.display="none";
+
 solutionWords=shuffle([...WORDS]).slice(0,8);
+
 gridParts=[];
-solutionWords.forEach((w,i)=>{w.forEach(s=>{gridParts.push({text:s,word:w.join(""),color:COLORS[i],used:false});});});
+solutionWords.forEach((w,i)=>{
+w.forEach(s=>{
+gridParts.push({text:s,word:w.join(""),color:COLORS[i],used:false});
+});
+});
+
 gridParts=shuffle(gridParts);
-renderGrid();startTime=Date.now();
+renderGrid();
+startTime=Date.now();
 }
 
 function renderGrid(){
@@ -86,10 +100,25 @@ grid.appendChild(d);
 function renderCurrent(){
 const c=document.getElementById("current");
 c.innerHTML="";
-current.forEach(p=>{const s=document.createElement("div");s.className="currentPart";s.innerText=p.text;c.appendChild(s);});
+current.forEach(p=>{
+const s=document.createElement("div");
+s.className="currentPart";
+s.innerText=p.text;
+});
+current.forEach(p=>{
+const s=document.createElement("div");
+s.className="currentPart";
+s.innerText=p.text;
+c.appendChild(s);
+});
 }
 
-function clearWord(){current.forEach(p=>{gridParts[p.index].used=false;});current=[];renderCurrent();renderGrid();}
+function clearWord(){
+current.forEach(p=>{gridParts[p.index].used=false;});
+current=[];
+renderCurrent();
+renderGrid();
+}
 
 function submitWord(){
 tries++;
@@ -97,13 +126,21 @@ let word=current.map(x=>x.text).join("");
 let match=solutionWords.find(w=>w.join("")===word);
 if(match){
 document.getElementById("found").innerHTML+=`<span class="wordFound">${word}</span>`;
-current=[];renderCurrent();renderGrid();
+current=[];
+renderCurrent();
+renderGrid();
 solutionWords=solutionWords.filter(w=>w.join("")!==word);
 if(solutionWords.length===0) winGame();
 }else{
 current.forEach(p=>gridParts[p.index].used=false);
-current.forEach(p=>{let tile=document.querySelectorAll(".tile")[p.index];tile.style.background="#ff4c4c";setTimeout(()=>{tile.style.background="#1a1a23";},500);});
-current=[];renderCurrent();renderGrid();
+current.forEach(p=>{
+let tile=document.querySelectorAll(".tile")[p.index];
+tile.style.background="#ff4c4c";
+setTimeout(()=>{tile.style.background="#1a1a23";},500);
+});
+current=[];
+renderCurrent();
+renderGrid();
 }
 }
 
