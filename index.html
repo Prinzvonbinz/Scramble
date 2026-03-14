@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Scrambled</title>
+<title>Scramble</title>
 
 <style>
 
@@ -14,14 +14,14 @@ margin:0;
 background:#0f1115;
 color:white;
 font-family:system-ui;
+height:100dvh;
 display:flex;
 justify-content:center;
 align-items:center;
-height:100dvh;
 }
 
 #game{
-width:min(92vw,620px);
+width:min(95vw,620px);
 height:92dvh;
 display:grid;
 grid-template-rows:auto auto 1fr auto auto auto;
@@ -36,11 +36,11 @@ display:flex;
 flex-wrap:wrap;
 justify-content:center;
 gap:6px;
-min-height:30px;
+min-height:28px;
 }
 
 .word{
-padding:5px 10px;
+padding:4px 10px;
 border-radius:6px;
 font-weight:bold;
 }
@@ -64,11 +64,15 @@ cursor:pointer;
 transition:.15s;
 }
 
-.tile:hover{background:#2a303a;transform:scale(1.05)}
+.tile:hover{background:#2a303a}
 
 .tile.used{
-opacity:0.2;
+opacity:0.25;
 pointer-events:none;
+}
+
+.tile.empty{
+visibility:hidden;
 }
 
 #build{
@@ -84,6 +88,7 @@ color:white;
 padding:8px 14px;
 border-radius:8px;
 cursor:pointer;
+margin:2px;
 }
 
 .stats{
@@ -145,6 +150,7 @@ Versuche: <span id="tries">0</span>
 <script>
 
 const WORDS=[
+
 ["SON","NE"],
 ["BLU","ME"],
 ["MOND","LICHT"],
@@ -162,11 +168,12 @@ const WORDS=[
 ["KIR","SCH","BAUM"],
 ["KIN","DER","GAR","TEN"],
 ["FEU","ER","WEHR"]
+
 ]
 
 const WORD_COUNT=6
 
-const colors=[
+const COLORS=[
 "#ff6b6b",
 "#4ecdc4",
 "#ffd93d",
@@ -179,7 +186,6 @@ let selected=[]
 let tiles=[]
 let build=[]
 let solved=[]
-
 let tries=0
 let time=0
 let timer
@@ -193,13 +199,15 @@ selected=WORDS.slice(0,WORD_COUNT)
 tiles=[]
 selected.forEach(w=>w.forEach(s=>tiles.push(s)))
 
+while(tiles.length<25)tiles.push("")
+
 shuffle(tiles)
 
 draw()
 
 timer=setInterval(()=>{
 time++
-document.getElementById("time").innerText=time
+document.getElementById("time").textContent=time
 },1000)
 
 }
@@ -212,8 +220,15 @@ grid.innerHTML=""
 tiles.forEach((t,i)=>{
 
 const d=document.createElement("div")
+
+if(t===""){
+d.className="tile empty"
+grid.appendChild(d)
+return
+}
+
 d.className="tile"
-d.innerText=t
+d.textContent=t
 
 if(build.find(b=>b.index===i)){
 d.classList.add("used")
@@ -229,10 +244,9 @@ grid.appendChild(d)
 
 function clickTile(i){
 
-const t=tiles[i]
-if(!t)return
+if(tiles[i]==="")return
 
-build.push({text:t,index:i})
+build.push({text:tiles[i],index:i})
 
 updateBuild()
 draw()
@@ -240,29 +254,35 @@ draw()
 }
 
 function updateBuild(){
-document.getElementById("build").innerText=
+
+document.getElementById("build").textContent=
 build.map(b=>b.text).join("")
+
 }
 
 function clearBuild(){
+
 build=[]
 updateBuild()
 draw()
+
 }
 
 function submitWord(){
 
 tries++
-document.getElementById("tries").innerText=tries
+document.getElementById("tries").textContent=tries
 
 const word=build.map(b=>b.text).join("")
 
 let correctIndex=-1
 
 selected.forEach((w,i)=>{
+
 if(w.join("")===word && !solved.includes(i)){
 correctIndex=i
 }
+
 })
 
 if(correctIndex>-1){
@@ -271,13 +291,16 @@ solved.push(correctIndex)
 
 const span=document.createElement("span")
 span.className="word"
-span.style.background=colors[correctIndex]
-span.innerText=word
+span.style.background=COLORS[correctIndex]
+span.textContent=word
 
 document.getElementById("found").appendChild(span)
 
+build.forEach(b=>tiles[b.index]="")
+
 build=[]
 updateBuild()
+draw()
 
 }else{
 
@@ -295,16 +318,25 @@ function hintColors(){
 const grid=document.getElementById("grid").children
 
 selected.forEach((w,i)=>{
-w.forEach(p=>{
+
+w.forEach(s=>{
+
 for(let g of grid){
-if(g.innerText===p){
-g.style.background=colors[i]
+
+if(g.textContent===s){
+
+g.style.background=COLORS[i]
+
 setTimeout(()=>{
 g.style.background="#1c1f26"
 },500)
+
 }
+
 }
+
 })
+
 })
 
 }
@@ -329,10 +361,14 @@ document.getElementById("win").style.display="flex"
 }
 
 function shuffle(a){
+
 for(let i=a.length-1;i>0;i--){
+
 const j=Math.floor(Math.random()*(i+1))
 [a[i],a[j]]=[a[j],a[i]]
+
 }
+
 }
 
 start()
